@@ -35,6 +35,9 @@ class OLSR_state {
 	linkset_t	linkset_;	///< Link Set (RFC 3626, section 4.2.1).
 	nbset_t		nbset_;		///< Neighbor Set (RFC 3626, section 4.3.1).
 	nb2hopset_t	nb2hopset_;	///< 2-hop Neighbor Set (RFC 3626, section 4.3.2).
+	nb3hopset_t	nb3hopset_;	///< 2-hop Neighbor Set (RFC 3626, section 4.3.2).
+	nb4hopset_t	nb4hopset_;	///< 2-hop Neighbor Set (RFC 3626, section 4.3.2).
+
 	topologyset_t	topologyset_;	///< Topology Set (RFC 3626, section 4.4).
 	mprset_t	mprset_;	///< MPR Set (RFC 3626, section 4.3.3).
 	mprselset_t	mprselset_;	///< MPR Selector Set (RFC 3626, section 4.3.4).
@@ -47,6 +50,9 @@ protected:
 	inline	mprselset_t&		mprselset()	{ return mprselset_; }
 	inline	nbset_t&		nbset()		{ return nbset_; }
 	inline	nb2hopset_t&		nb2hopset()	{ return nb2hopset_; }
+	inline	nb3hopset_t&		nb3hopset()	{ return nb3hopset_; }
+	inline	nb4hopset_t&		nb4hopset()	{ return nb4hopset_; }
+
 	inline	topologyset_t&		topologyset()	{ return topologyset_; }
 	inline	dupset_t&		dupset()	{ return dupset_; }
 	inline	ifaceassocset_t&	ifaceassocset()	{ return ifaceassocset_; }
@@ -68,6 +74,20 @@ protected:
 	void			erase_nb2hop_tuples(nsaddr_t);
 	void			erase_nb2hop_tuples(nsaddr_t, nsaddr_t);
 	void			insert_nb2hop_tuple(OLSR_nb2hop_tuple*);
+
+	OLSR_nb3hop_tuple*	find_nb3hop_tuple(nsaddr_t, nsaddr_t);
+	void			erase_nb3hop_tuple(OLSR_nb3hop_tuple*);
+	void			erase_nb3hop_tuples(nsaddr_t);
+	void			erase_nb3hop_tuples(nsaddr_t, nsaddr_t);
+	void			insert_nb3hop_tuple(OLSR_nb3hop_tuple*);
+
+	OLSR_nb4hop_tuple*	find_nb4hop_tuple(nsaddr_t, nsaddr_t);
+	void			erase_nb4hop_tuple(OLSR_nb4hop_tuple*);
+	void			erase_nb4hop_tuples(nsaddr_t);
+	void			erase_nb4hop_tuples(nsaddr_t, nsaddr_t);
+	void			insert_nb4hop_tuple(OLSR_nb4hop_tuple*);
+
+
 
 	bool			find_mpr_addr(nsaddr_t);
 	void			insert_mpr_addr(nsaddr_t);

@@ -172,6 +172,106 @@ OLSR_state::insert_nb2hop_tuple(OLSR_nb2hop_tuple* tuple){
 	nb2hopset_.push_back(tuple);
 }
 
+/********** Neighbor 3 Hop Set Manipulation **********/
+
+OLSR_nb3hop_tuple*
+OLSR_state::find_nb3hop_tuple(nsaddr_t nb_main_addr, nsaddr_t nb3hop_addr) {
+	for (nb3hopset_t::iterator it = nb3hopset_.begin(); it != nb3hopset_.end(); it++) {
+		OLSR_nb3hop_tuple* tuple = *it;
+		if (tuple->nb_main_addr() == nb_main_addr && tuple->nb3hop_addr() == nb3hop_addr)
+			return tuple;
+	}
+	return NULL;
+}
+
+void
+OLSR_state::erase_nb3hop_tuple(OLSR_nb3hop_tuple* tuple) {
+	for (nb3hopset_t::iterator it = nb3hopset_.begin(); it != nb3hopset_.end(); it++) {
+		if (*it == tuple) {
+			nb3hopset_.erase(it);
+			break;
+		}
+	}
+}
+
+void
+OLSR_state::erase_nb3hop_tuples(nsaddr_t nb_main_addr, nsaddr_t nb3hop_addr) {
+	for (nb3hopset_t::iterator it = nb3hopset_.begin(); it != nb3hopset_.end(); it++) {
+		OLSR_nb3hop_tuple* tuple = *it;
+		if (tuple->nb_main_addr() == nb_main_addr && tuple->nb3hop_addr() == nb3hop_addr) {
+			it = nb3hopset_.erase(it);
+			it--;
+		}
+	}
+}
+
+void
+OLSR_state::erase_nb3hop_tuples(nsaddr_t nb_main_addr) {
+	for (nb3hopset_t::iterator it = nb3hopset_.begin(); it != nb3hopset_.end(); it++) {
+		OLSR_nb3hop_tuple* tuple = *it;
+		if (tuple->nb_main_addr() == nb_main_addr) {
+			it = nb3hopset_.erase(it);
+			it--;
+		}
+	}
+}
+
+void
+OLSR_state::insert_nb3hop_tuple(OLSR_nb3hop_tuple* tuple){
+	nb3hopset_.push_back(tuple);
+}
+
+
+/********** Neighbor 4 Hop Set Manipulation **********/
+
+OLSR_nb4hop_tuple*
+OLSR_state::find_nb4hop_tuple(nsaddr_t nb_main_addr, nsaddr_t nb4hop_addr) {
+	for (nb4hopset_t::iterator it = nb4hopset_.begin(); it != nb4hopset_.end(); it++) {
+		OLSR_nb4hop_tuple* tuple = *it;
+		if (tuple->nb_main_addr() == nb_main_addr && tuple->nb4hop_addr() == nb4hop_addr)
+			return tuple;
+	}
+	return NULL;
+}
+
+void
+OLSR_state::erase_nb4hop_tuple(OLSR_nb2hop_tuple* tuple) {
+	for (nb4hopset_t::iterator it = nb4hopset_.begin(); it != nb4hopset_.end(); it++) {
+		if (*it == tuple) {
+			nb4hopset_.erase(it);
+			break;
+		}
+	}
+}
+
+void
+OLSR_state::erase_nb4hop_tuples(nsaddr_t nb_main_addr, nsaddr_t nb4hop_addr) {
+	for (nb4hopset_t::iterator it = nb4hopset_.begin(); it != nb4hopset_.end(); it++) {
+		OLSR_nb4hop_tuple* tuple = *it;
+		if (tuple->nb_main_addr() == nb_main_addr && tuple->nb4hop_addr() == nb4hop_addr) {
+			it = nb4hopset_.erase(it);
+			it--;
+		}
+	}
+}
+
+void
+OLSR_state::erase_nb4hop_tuples(nsaddr_t nb_main_addr) {
+	for (nb4hopset_t::iterator it = nb4hopset_.begin(); it != nb4hopset_.end(); it++) {
+		OLSR_nb4hop_tuple* tuple = *it;
+		if (tuple->nb_main_addr() == nb_main_addr) {
+			it = nb4hopset_.erase(it);
+			it--;
+		}
+	}
+}
+
+void
+OLSR_state::insert_nb4hop_tuple(OLSR_nb4hop_tuple* tuple){
+	nb4hopset_.push_back(tuple);
+}
+
+
 /********** MPR Set Manipulation **********/
 
 bool

@@ -108,6 +108,34 @@ typedef struct OLSR_nb2hop_tuple {
 	inline double&		time()		{ return time_; }
 } OLSR_nb2hop_tuple;
 
+/// A 3-hop Tuple.
+typedef struct OLSR_nb3hop_tuple {
+	/// Main address of a neighbor.
+	nsaddr_t	nb_main_addr_;
+	/// Main address of a 3-hop neighbor with a symmetric link to nb_main_addr.
+	nsaddr_t	nb3hop_addr_;
+	/// Time at which this tuple expires and must be removed.
+	double		time_;
+
+	inline nsaddr_t&	nb_main_addr()	{ return nb_main_addr_; }
+	inline nsaddr_t&	nb3hop_addr()	{ return nb3hop_addr_; }
+	inline double&		time()		{ return time_; }
+} OLSR_nb3hop_tuple;
+
+/// A 4-hop Tuple.
+typedef struct OLSR_nb4hop_tuple {
+	/// Main address of a neighbor.
+	nsaddr_t	nb_main_addr_;
+	/// Main address of a 4-hop neighbor with a symmetric link to nb_main_addr.
+	nsaddr_t	nb4hop_addr_;
+	/// Time at which this tuple expires and must be removed.
+	double		time_;
+
+	inline nsaddr_t&	nb_main_addr()	{ return nb_main_addr_; }
+	inline nsaddr_t&	nb4hop_addr()	{ return nb4hop_addr_; }
+	inline double&		time()		{ return time_; }
+} OLSR_nb4hop_tuple;
+
 /// An MPR-Selector Tuple.
 typedef struct OLSR_mprsel_tuple {
 	/// Main address of a node which have selected this node as a MPR.
@@ -165,6 +193,8 @@ typedef std::vector<OLSR_mprsel_tuple*>		mprselset_t;	///< MPR Selector Set type
 typedef std::vector<OLSR_link_tuple*>		linkset_t;	///< Link Set type.
 typedef std::vector<OLSR_nb_tuple*>		nbset_t;	///< Neighbor Set type.
 typedef std::vector<OLSR_nb2hop_tuple*>		nb2hopset_t;	///< 2-hop Neighbor Set type.
+typedef std::vector<OLSR_nb3hop_tuple*>		nb3hopset_t;	///< 3-hop Neighbor Set type.
+typedef std::vector<OLSR_nb4hop_tuple*>		nb4hopset_t;	///< 4-hop Neighbor Set type.
 typedef std::vector<OLSR_topology_tuple*>	topologyset_t;	///< Topology Set type.
 typedef std::vector<OLSR_dup_tuple*>		dupset_t;	///< Duplicate Set type.
 typedef std::vector<OLSR_iface_assoc_tuple*>	ifaceassocset_t;///< Interface Association Set type.
