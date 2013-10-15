@@ -235,7 +235,7 @@ OLSR_state::find_nb4hop_tuple(nsaddr_t nb_main_addr, nsaddr_t nb4hop_addr) {
 }
 
 void
-OLSR_state::erase_nb4hop_tuple(OLSR_nb2hop_tuple* tuple) {
+OLSR_state::erase_nb4hop_tuple(OLSR_nb4hop_tuple* tuple) {
 	for (nb4hopset_t::iterator it = nb4hopset_.begin(); it != nb4hopset_.end(); it++) {
 		if (*it == tuple) {
 			nb4hopset_.erase(it);
