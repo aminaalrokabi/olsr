@@ -155,6 +155,9 @@
 /// Random number between [0-OLSR_MAXJITTER] used to jitter OLSR packet transmission.
 #define JITTER			(Random::uniform()*OLSR_MAXJITTER)
 
+#define NODE_TRAVERSAL_TIME     0.03             // 30 ms
+#define MAX_HISTORY	3
+
 
 class OLSR;			// forward declaration
 
@@ -325,6 +328,10 @@ class OLSR : public Agent {
 	friend class OLSR_IfaceAssocTupleTimer;
 	friend class OLSR_MsgTimer;
 	
+	u_int32_t       seqno;                  // Sequence Number
+	int             bid;                    // Broadcast ID
+
+
 	/// Address of the routing agent.
 	nsaddr_t	ra_addr_;
 	
@@ -437,6 +444,9 @@ protected:
 	int		degree(OLSR_nb_tuple*);
 
 	static bool	seq_num_bigger_than(u_int16_t, u_int16_t);
+
+	void		send_rrequest(nsaddr_t dst);
+	double 		PerHopTime(OLSR_rt_entry *rt);
 
 public:
 	OLSR(nsaddr_t);

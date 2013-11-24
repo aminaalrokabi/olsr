@@ -36,6 +36,8 @@
 #include <cmu-trace.h>
 #include <map>
 
+#include <aodv/aodv_packet.h>
+
 /// Length (in bytes) of UDP header.
 #define UDP_HDR_LEN	8
 
@@ -441,6 +443,8 @@ OLSR::OLSR(nsaddr_t id) :	Agent(PT_OLSR),
 	pkt_seq_	= OLSR_MAX_SEQ_NUM;
 	msg_seq_	= OLSR_MAX_SEQ_NUM;
 	ansn_		= OLSR_MAX_SEQ_NUM;
+	seqno = 2;
+	bid = 1;
 }
 
 ///
@@ -1126,7 +1130,12 @@ OLSR::forward_data(Packet* p) {
 					CURRENT_TIME,
 					OLSR::node_id(ra_addr()),
 					OLSR::node_id(ih->daddr()));
-				drop(p, DROP_RTR_NO_ROUTE);
+
+				debug("%f: Broadbcasting a rreq packet for %d instead\n",
+					CURRENT_TIME,
+					OLSR::node_id(ih->daddr()));
+				send_rrequest(ih->daddr());
+
 				return;
 			}
 			else {
@@ -2054,3 +2063,142 @@ OLSR::node_id(nsaddr_t addr) {
 	assert(node != NULL);
 	return node->nodeid();
 }
+
+
+
+
+
+/////////////////////////////
+///// HYBRID CODE
+/////////////////////////////
+
+double
+OLSR::PerHopTime(OLSR_rt_entry *rt) {
+int num_non_zero = 0, i;
+double total_latency = 0.0;
+
+ if (!rt)
+   return ((double) NODE_TRAVERSAL_TIME );
+
+ for (i=0; i < MAX_HISTORY; i++) {
+   if (rt->rt_disc_latency[i] > 0.0) {
+      num_non_zero++;
+      total_latency += rt->rt_disc_latency[i];
+   }
+ }
+ if (num_non_zero > 0)
+   return(total_latency / (double) num_non_zero);
+ else
+   return((double) NODE_TRAVERSAL_TIME);
+
+}
+
+
+void
+OLSR::send_rrequest(nsaddr_t dst) {
+	// Allocate a RREQ packet
+	Packet *p = Packet::alloc();
+	struct hdr_cmn *ch = HDR_CMN(p);
+	struct hdr_ip *ih = HDR_IP(p);
+	struct hdr_aodv_request *rq = HDR_AODV_REQUEST(p);
+	OLSR_rt_entry* rt= rtable_.lookup(dst);
+	/*
+	 *  Rate limit sending of Route Requests. We are very conservative
+	 *  about sending out route requests.
+	 */
+	/*
+	if (rt->rt_flags == RTF_UP) {
+		assert(rt->rt_hops != INFINITY2);
+		Packet::free((Packet *)p);
+		return;
+	}
+	*/
+	if (rt->rt_req_timeout > CURRENT_TIME) {
+		Packet::free((Packet *)p);
+		return;
+	}
+
+	// rt_req_cnt is the no. of times we did network-wide broadcast
+	// RREQ_RETRIES is the maximum number we will allow before
+	// going to a long timeout.
+
+	if (rt->rt_req_cnt > RREQ_RETRIES) {
+		rt->rt_req_timeout = CURRENT_TIME + MAX_RREQ_TIMEOUT;
+		rt->rt_req_cnt = 0;
+		Packet *buf_pkt;
+		/*while ((buf_pkt = rqueue.deque(rt->rt_dst))) {
+			drop(buf_pkt, DROP_RTR_NO_ROUTE);
+		}*/
+		Packet::free((Packet *)p);
+		return;
+	}
+
+	// Determine the TTL to be used this time.
+	// Dynamic TTL evaluation - SRD
+
+	rt->rt_req_last_ttl = max(rt->rt_req_last_ttl,rt->rt_last_hop_count);
+
+	if (0 == rt->rt_req_last_ttl) {
+		// first time query broadcast
+		ih->ttl_ = TTL_START;
+	}
+	else {
+		// Expanding ring search.
+		if (rt->rt_req_last_ttl < TTL_THRESHOLD)
+			ih->ttl_ = rt->rt_req_last_ttl + TTL_INCREMENT;
+		else {
+			// network-wide broadcast
+			ih->ttl_ = NETWORK_DIAMETER;
+			rt->rt_req_cnt += 1;
+		}
+	}
+
+	// remember the TTL used  for the next time
+	rt->rt_req_last_ttl = ih->ttl_;
+
+	// PerHopTime is the roundtrip time per hop for route requests.
+	// The factor 2.0 is just to be safe .. SRD 5/22/99
+	// Also note that we are making timeouts to be larger if we have
+	// done network wide broadcast before.
+
+	rt->rt_req_timeout = 2.0 * (double) ih->ttl_ * PerHopTime(rt);
+	if (rt->rt_req_cnt > 0)
+		rt->rt_req_timeout *= rt->rt_req_cnt;
+	rt->rt_req_timeout += CURRENT_TIME;
+
+	// Don't let the timeout to be too large, however .. SRD 6/8/99
+	if (rt->rt_req_timeout > CURRENT_TIME + MAX_RREQ_TIMEOUT)
+		rt->rt_req_timeout = CURRENT_TIME + MAX_RREQ_TIMEOUT;
+	rt->rt_expire = 0;
+
+	// Fill out the RREQ packet
+	// ch->uid() = 0;
+	ch->ptype() = PT_AODV;
+	ch->size() = IP_HDR_LEN + rq->size();
+	ch->iface() = -2;
+	ch->error() = 0;
+	ch->addr_type() = NS_AF_NONE;
+	ch->prev_hop_ = ra_addr();          // AODV hack
+
+	ih->saddr() = ra_addr();
+	ih->daddr() = IP_BROADCAST;
+	ih->sport() = RT_PORT;
+	ih->dport() = RT_PORT;
+
+	// Fill up some more fields.
+	rq->rq_type = AODVTYPE_RREQ;
+	rq->rq_hop_count = 1;
+	rq->rq_bcast_id = bid++;
+	rq->rq_dst = dst;
+	rq->rq_dst_seqno = (rt ? rt->rt_seqno : 0);
+	rq->rq_src = ra_addr();
+	seqno += 2;
+	assert ((seqno%2) == 0);
+	rq->rq_src_seqno = seqno;
+	rq->rq_timestamp = CURRENT_TIME;
+	Scheduler::instance().schedule(target_, p, 0.);
+}
+
+
+
+

@@ -30,12 +30,30 @@
 #include <vector>
 #include <config.h>
 
+#define RTF_UP 1
+#define INFINITY2        0xff
+#define RREQ_RETRIES            3
+#define MAX_RREQ_TIMEOUT	10.0 //sec
+#define TTL_START     5
+#define TTL_THRESHOLD 7
+#define TTL_INCREMENT 2
+#define NETWORK_DIAMETER        30             // 30 hops
+
 /// An %OLSR's routing table entry.
 typedef struct OLSR_rt_entry {
 	nsaddr_t	dest_addr_;	///< Address of the destination node.
 	nsaddr_t	next_addr_;	///< Address of the next hop.
 	nsaddr_t	iface_addr_;	///< Address of the local interface.
 	u_int32_t	dist_;		///< Distance in hops to the destination.
+	// AODV rt fields
+	double		rt_req_timeout;         // when I can send another req
+	u_int8_t	rt_req_cnt;             // number of route requests
+	int			rt_req_last_ttl;        // last ttl value used
+	int			rt_last_hop_count;	// last valid hop count
+	double		rt_disc_latency[3];
+	double		rt_expire;     		// when entry expires
+	u_int32_t	rt_seqno;
+
 	
 	inline nsaddr_t&	dest_addr()	{ return dest_addr_; }
 	inline nsaddr_t&	next_addr()	{ return next_addr_; }
