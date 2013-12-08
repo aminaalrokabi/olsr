@@ -35,13 +35,12 @@
 #include <ip.h>
 #include <cmu-trace.h>
 #include <map>
-
+#include <ctime>
 #include <aodv/aodv_packet.h>
 
 /// Length (in bytes) of UDP header.
 #define UDP_HDR_LEN	8
 
-///
 /// \brief Function called by MAC layer when cannot deliver a packet.
 ///
 /// \param p Packet which couldn't be delivered.
@@ -68,6 +67,7 @@ static class OLSRClass : public TclClass {
 public:
 	OLSRClass() : TclClass("Agent/OLSR") {}
 	TclObject* create(int argc, const char*const* argv) {
+
 		// argv has the following structure:
 		// <tcl-object> <tcl-object> Agent/OLSR create-shadow <id>
 		// e.g: _o17 _o17 Agent/OLSR create-shadow 0
@@ -432,13 +432,16 @@ OLSR::OLSR(nsaddr_t id) :	Agent(PT_OLSR),
 	// Note: Do NOT change the values of these variables in the constructor
 	// after binding them! The desired default values should be set in
 	// ns-X.XX/tcl/lib/ns-default.tcl instead.
-	bind("willingness_", &willingness_);
+
+	int64_t willingness [5]= {OLSR_WILL_NEVER, OLSR_WILL_LOW, OLSR_WILL_DEFAULT, OLSR_WILL_HIGH, OLSR_WILL_ALWAYS};
+
 	bind("hello_ival_", &hello_ival_);
 	bind("tc_ival_", &tc_ival_);
 	bind("mid_ival_", &mid_ival_);
 	bind_bool("use_mac_", &use_mac_);
 	
 	// Do some initializations
+	willingness_ = willingness[rand() % 5];
 	ra_addr_	= id;
 	pkt_seq_	= OLSR_MAX_SEQ_NUM;
 	msg_seq_	= OLSR_MAX_SEQ_NUM;
@@ -1113,6 +1116,15 @@ OLSR::forward_data(Packet* p) {
 	struct hdr_cmn* ch	= HDR_CMN(p);
 	struct hdr_ip* ih	= HDR_IP(p);
 
+	if (willingness() < 3) {
+		debug("%f: Node %d has a willigness of %d, therefore we send a rrequest\n",
+								CURRENT_TIME,
+								OLSR::node_id(ih->daddr()),
+							willingness());
+		send_rrequest(ih->daddr());
+
+	}
+
 	if (ch->direction() == hdr_cmn::UP &&
 		((u_int32_t)ih->daddr() == IP_BROADCAST || ih->daddr() == ra_addr())) {
 		dmux_->recv(p, 0);
@@ -1130,11 +1142,6 @@ OLSR::forward_data(Packet* p) {
 					CURRENT_TIME,
 					OLSR::node_id(ra_addr()),
 					OLSR::node_id(ih->daddr()));
-
-				debug("%f: Broadbcasting a rreq packet for %d instead\n",
-					CURRENT_TIME,
-					OLSR::node_id(ih->daddr()));
-				send_rrequest(ih->daddr());
 
 				return;
 			}
